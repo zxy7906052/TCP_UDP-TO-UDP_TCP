@@ -1,0 +1,80 @@
+import socket, struct
+import threading
+
+clients = {}
+
+def read(socket_fuwu):
+    while True:
+
+        recv_data = socket_fuwu.recv(1024)
+        if recv_data:
+            print('收到的信息：',recv_data.decode('gbk'))
+
+def send_msg(soc, msg):
+    l = len(msg.encode("gbk"))
+    soc.send(struct.pack("q",l))
+
+    # 发数据
+    soc.send(msg.encode("gbk"))
+
+def write(socket_fuwu):
+    while True:
+        # 1创建套接字
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # 2.绑定一个本地信息
+        localaddr = ("", 30008)  # 必须绑定自己电脑IP和port
+        udp_socket.bind(localaddr)
+        # 3.接收数据
+        while True:
+            recv_data = udp_socket.recvfrom(1024)
+            # recv_data存储元组（接收到的数据，（发送方的ip,port））
+            recv_msg = recv_data[0]  # 信息内容
+            send_addr = recv_data[1]  # 信息地址
+            # 4.打印接收到的数据
+            print(recv_data)
+            print("信息来自:%s 内容是:%s" % (str(send_addr), recv_msg.decode("gbk")))
+            seng_data = recv_msg.decode("gbk")
+            if seng_data:
+                for ip, conn in clients.items():
+                    # if c != target_conn:
+                    send_msg(conn, seng_data)  # data['msg']
+                     # socket_fuwu.send(seng_data.encode('gbk'))
+
+            # l = len("123".encode("utf-8"))
+            # socket_fuwu.send(struct.pack("q", l))
+            # socket_fuwu.send("123".encode("utf-8"))
+
+
+def main():
+    tcp_socket_host = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+
+    # 服务器端口回收操作（释放端口）
+    tcp_socket_host.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,True)
+
+    # 2绑定端口
+    tcp_socket_host.bind(('', 24421))
+
+    # 3监听  变为被动套接字
+    tcp_socket_host.listen(128)  # 128可以监听的最大数量，最大链接数
+
+    # 4等待客户端连接
+    socket_fuwu,addr_client=tcp_socket_host.accept()  #accept(new_socket,addr)
+    print("%s" % addr_client[0],"连接到服务器!")
+    clients[addr_client[0]] = socket_fuwu  # 把ip地址作为key，conn作为value存入clients字典中 ,clients = {'192.188.3.4':conn链接}
+    print(socket_fuwu)
+    print(addr_client)
+
+    t1=threading.Thread(target=read,args=(socket_fuwu,))
+    # t1.start()
+    write(socket_fuwu)
+    # t2=threading.Thread(target=write,args=(socket_fuwu,))
+    t1.start()
+    # t2.start()
+
+
+    #6服务套接字关闭
+    # socket_fuwu.close()    #服务器一般不关闭   此时服务端口因为需要一直执行所以也不能关闭
+
+
+if __name__ == '__main__':
+    main()
