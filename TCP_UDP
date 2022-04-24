@@ -1,0 +1,64 @@
+# 导入 socket、sys 模块
+import socket, time
+
+# 获取本地主机名
+tcp_host = "192.168.12.1"
+udp_lcoaladdr = ("", 30009)
+# 设置端口号
+tcp_port = 24421
+udp_send_ip = "182.92.115.110"
+udp_send_port = 30008
+
+def socket_connect():
+    # 创建 socket 对象
+    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # 连接服务，指定主机和端口
+    tcp.connect((tcp_host, tcp_port))
+    udp.bind(udp_lcoaladdr)
+
+    return tcp, udp
+
+def main():
+    # # 创建 socket 对象
+    # tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # # 获取本地主机名
+    # tcp_host = "192.168.12.1"
+    # udp_lcoaladdr = ("",30009)
+    # # 设置端口号
+    # tcp_port = 24421
+    # udp_send_ip = "182.92.115.110"
+    # udp_send_port = 30008
+    #
+    # # 连接服务，指定主机和端口
+    # tcp.connect((tcp_host, tcp_port))
+    # udp.bind(udp_lcoaladdr)
+
+    tcp, udp = socket_connect()
+    while True:
+    # 接收小于 1024 字节的数据
+        try:
+            msg = tcp.recv(1024)
+            print (msg.decode('utf-8'))
+            udp.sendto(msg,(udp_send_ip,udp_send_port))
+        except socket.error:
+            #断线重连
+            print("\r\nsocket error,do reconnect ")
+            tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            tcp.connect((tcp_host, tcp_port))
+            udp.bind(udp_lcoaladdr)
+            time.sleep(3)
+        except:
+            print('\r\nother error occur ')
+            print(3)
+        time.sleep(1)
+
+    tcp.close()
+    udp.close()
+
+
+if __name__ == "__main__":
+    main()
